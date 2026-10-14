@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="160 220 470 300" width="470" height="300">
+  <defs>
+    <!-- Left Stem Gradient -->
+    <linearGradient id="leftStemGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00B4DB"/>
+      <stop offset="100%" stop-color="#0083B0"/>
+    </linearGradient>
+
+    <!-- Right Stem Gradient -->
+    <linearGradient id="rightStemGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0B486B"/>
+      <stop offset="100%" stop-color="#051937"/>
+    </linearGradient>
+
+    <!-- Ring Gradient -->
+    <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00C6FF"/>
+      <stop offset="100%" stop-color="#0072FF"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background (Transparent) -->
+  <rect width="800" height="600" fill="none"/>
+
+  <g transform="translate(0, -20)">
+    <!-- Right Stem (Back) -->
+    <path d="M 450,250 L 590,250 C 580,250 560,260 540,290 L 400,510 C 390,525 380,530 370,530 C 380,510 400,470 420,430 L 450,250 Z" fill="url(#rightStemGrad)"/>
+
+    <!-- Left Stem (Front) -->
+    <path d="M 210,250 L 330,250 C 350,250 370,270 390,310 L 430,390 L 370,530 C 360,530 345,515 335,495 L 210,250 Z" fill="url(#leftStemGrad)"/>
+
+    <!-- Swirling Ring -->
+    <path d="M 195,430 C 260,480 410,480 570,390 C 600,373 620,350 605,330 C 590,310 545,320 500,335 C 410,365 290,385 220,360 C 200,353 190,340 195,330 C 200,320 220,310 250,295 C 200,320 170,360 195,430 Z" fill="url(#ringGrad)"/>
+  </g>
+</svg>

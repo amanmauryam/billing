@@ -1,4 +1,4 @@
-{% load icons %}
+{% load icons static %}
 <!DOCTYPE html>
 <html lang="en" class="h-full">
 <head>
@@ -14,13 +14,11 @@
 
     <!-- Sidebar -->
     <aside class="app-sidebar sticky top-0 z-30 bg-surface border-b lg:border-b-0 lg:border-r border-line lg:h-screen lg:overflow-y-auto">
-      <div class="h-16 px-4 flex items-center gap-2.5 border-b border-line">
-        <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-white shrink-0">
-          {% icon "scan-barcode" "h-[18px] w-[18px]" %}
-        </span>
+      <div class="h-16 px-4 flex items-center gap-3 border-b border-line">
+        <img src="{% static 'icons/vexatry_logo.svg' %}" alt="Vexatry Global logo" class="h-10 w-auto shrink-0" width="470" height="300">
         <div class="min-w-0">
-          <div class="font-semibold leading-tight tracking-tight">Vexatry Global Pvt. Ltd.</div>
-          <div class="text-[11px] text-muted leading-tight">Offline Edition</div>
+          <div class="text-[13px] font-semibold leading-tight tracking-tight truncate" title="Vexatry Global Pvt. Ltd.">Vexatry Global Pvt. Ltd.</div>
+          <div class="text-[11px] text-muted leading-tight truncate"> <span class="font-medium font-semibold">POS</span> Offline Edition</div>
         </div>
       </div>
 
