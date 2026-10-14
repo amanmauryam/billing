@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% load icons %}
+
+{% block content %}
+<div id="pos-app"
+     class="lg:h-[calc(100vh-8rem)] lg:min-h-[560px]"
+     data-search-url="{% url 'billing:product_search' %}"
+     data-lookup-url="{% url 'billing:barcode_lookup' %}"
+     data-checkout-url="{% url 'billing:checkout' %}"
+     data-pricing-mode="{{ pricing_mode }}">
+
+  <div class="lg:grid lg:grid-cols-[minmax(0,1fr)_400px] gap-5 lg:h-full">
+
+    <!-- Left: product discovery -->
+    <section class="card flex flex-col min-h-[26rem] lg:min-h-0 lg:h-full mb-5 lg:mb-0 overflow-hidden" aria-label="Product discovery">
+      <div class="p-4 border-b border-line">
+        <div class="flex items-center gap-2 text-[13px] font-medium text-muted mb-2">
+          {% icon "scan-line" "h-4 w-4" %}
+          <span>Scan a barcode or search the catalogue</span>
+          <span class="ml-auto hidden sm:inline-flex items-center gap-1 text-[11px] text-muted">
+            {% icon "keyboard" "h-3.5 w-3.5" %} <kbd class="rounded border border-line bg-app px-1.5 py-0.5 font-sans">/</kbd> to focus
+          </span>
+        </div>
+        <div class="relative">
+          <span class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-muted">{% icon "scan-barcode" "h-5 w-5" %}</span>
+          <input id="scan-input" class="input input-lg pl-11 pr-24 tnum" type="text" autocomplete="off"
+                 autofocus placeholder="Barcode or product name…" aria-describedby="scan-feedback" aria-label="Barcode or product search">
+          <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 hidden sm:flex items-center gap-1.5 text-[11px] text-muted">
+            <kbd class="rounded border border-line bg-app px-1.5 py-0.5 font-sans">Enter</kbd> to add
+          </span>
+          <button type="button" id="scan-button" class="absolute right-2 top-1/2 -translate-y-1/2 btn-secondary h-9 hidden">Add</button>
+        </div>
+        <p id="scan-feedback" class="mt-2 text-[13px] min-h-[1.25rem]" role="status" aria-live="polite"></p>
+      </div>
+
+      <div id="results" class="flex-1 overflow-y-auto p-2">
+        <div class="empty-state h-full">
+          <span class="empty-icon">{% icon "search" "h-6 w-6" %}</span>
+          <h3 class="text-[15px] font-semibold">Ready to scan</h3>
+          <p class="text-muted mt-1 max-w-xs text-[13px]">Scan a product barcode or start typing a name to find items. Exact barcode matches are added instantly.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Right: current bill -->
+    <section class="card flex flex-col lg:h-full overflow-hidden" aria-label="Current bill">
+      <div class="flex items-center justify-between gap-3 px-5 py-3.5 border-b border-line">
+        <div class="flex items-center gap-2">
+          <h2 class="text-[15px] font-semibold">Current Bill</h2>
+          <span id="cart-count" class="badge-muted">0 items</span>
+        </div>
+        <button type="button" id="clear-cart" class="btn-ghost h-8 px-2.5 text-[13px] text-danger hover:bg-danger/10 hidden">
+          {% icon "trash-2" "h-4 w-4" %} Clear
+        </button>
+      </div>
+
+      <div id="cart" class="flex-1 overflow-y-auto">
+        <div class="empty-state h-full">
+          <span class="empty-icon">{% icon "shopping-cart" "h-6 w-6" %}</span>
+          <h3 class="text-[15px] font-semibold">The bill is empty</h3>
+          <p class="text-muted mt-1 max-w-xs text-[13px]">Scanned and searched products will appear here.</p>
+        </div>
+      </div>
+
+      <div class="border-t border-line p-4 bg-surface">
+        <dl class="space-y-1.5 text-[13px]">
+          <div class="flex justify-between"><dt class="text-muted">Subtotal</dt><dd id="total-subtotal" class="tnum text-ink">₹0.00</dd></div>
+          <div class="flex justify-between"><dt class="text-muted">GST</dt><dd id="total-tax" class="tnum text-ink">₹0.00</dd></div>
+        </dl>
+        <div class="flex items-end justify-between mt-3 pt-3 border-t border-line">
+          <span class="text-[13px] font-medium text-muted">Grand Total</span>
+          <span id="total-grand" class="text-[28px] leading-none font-semibold tracking-tight tnum text-ink">₹0.00</span>
+        </div>
+
+        <label class="label mt-4 mb-1.5" for="payment-method">Payment method <span class="text-muted font-normal">(optional)</span></label>
+        <select id="payment-method" class="input mb-3">
+          <option value="">Not recorded</option>
+          <option value="cash">Cash</option>
+          <option value="card">Card</option>
+          <option value="upi">UPI</option>
+        </select>
+
+        <p id="checkout-error" class="field-error mb-2 hidden" role="alert"></p>
+        <button type="button" id="checkout-button" class="btn-primary btn-lg w-full" disabled>
+          {% icon "check" "h-[18px] w-[18px]" %} <span id="checkout-label">Complete Sale</span>
+        </button>
+      </div>
+    </section>
+  </div>
+</div>
+
+<!-- Success dialog -->
+<div id="success-panel" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="success-title">
+  <div class="absolute inset-0 bg-ink/40" data-close-success></div>
+  <div class="relative card p-7 max-w-sm w-full text-center shadow-pop">
+    <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-success/10 text-success">
+      {% icon "circle-check" "h-7 w-7" %}
+    </div>
+    <h3 id="success-title" class="text-lg font-semibold mt-4">Sale completed</h3>
+    <p class="text-muted mt-1.5 text-sm">Bill <span id="success-bill" class="font-semibold text-ink tnum"></span> saved and stock updated.</p>
+    <div class="grid grid-cols-2 gap-2 mt-6">
+      <a id="view-receipt" href="#" class="btn-secondary">{% icon "receipt-text" "h-4 w-4" %} View receipt</a>
+      <a id="print-receipt" href="#" target="_blank" rel="noopener" class="btn-secondary">{% icon "printer" "h-4 w-4" %} Print</a>
+    </div>
+    <button type="button" id="new-bill" class="btn-primary w-full mt-2">{% icon "plus" "h-4 w-4" %} New Bill</button>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/pos.js" defer></script>
+{% endblock %}

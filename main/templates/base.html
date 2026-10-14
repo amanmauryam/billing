@@ -1,0 +1,105 @@
+{% load icons %}
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{{ page_title|default:"Shop POS" }}{% endblock %} · {{ shop.shop_name }}</title>
+  <link rel="stylesheet" href="/static/css/output.css">
+  {% block head %}{% endblock %}
+</head>
+<body class="min-h-full">
+  {% with ns=request.resolver_match.namespace view=request.resolver_match.url_name %}
+  <div class="app-shell lg:grid lg:grid-cols-[248px_1fr] lg:min-h-screen">
+
+    <!-- Sidebar -->
+    <aside class="app-sidebar sticky top-0 z-30 bg-surface border-b lg:border-b-0 lg:border-r border-line lg:h-screen lg:overflow-y-auto">
+      <div class="h-16 px-4 flex items-center gap-2.5 border-b border-line">
+        <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-white shrink-0">
+          {% icon "scan-barcode" "h-[18px] w-[18px]" %}
+        </span>
+        <div class="min-w-0">
+          <div class="font-semibold leading-tight tracking-tight">Shop POS</div>
+          <div class="text-[11px] text-muted leading-tight">Offline Edition</div>
+        </div>
+      </div>
+
+      <nav class="p-3 flex lg:block gap-1 overflow-x-auto" aria-label="Main navigation">
+        <a href="{% url 'core:dashboard' %}" class="nav-link whitespace-nowrap {% if view == 'dashboard' %}nav-link-active{% endif %}" {% if view == 'dashboard' %}aria-current="page"{% endif %}>
+          {% icon "layout-dashboard" %} <span>Dashboard</span>
+        </a>
+        <a href="{% url 'billing:pos' %}" class="nav-link whitespace-nowrap {% if ns == 'billing' and view == 'pos' %}nav-link-active{% endif %}" {% if ns == 'billing' and view == 'pos' %}aria-current="page"{% endif %}>
+          {% icon "scan-line" %} <span>Point of Sale</span>
+        </a>
+        <a href="{% url 'products:list' %}" class="nav-link whitespace-nowrap {% if ns == 'products' %}nav-link-active{% endif %}" {% if ns == 'products' %}aria-current="page"{% endif %}>
+          {% icon "package" %} <span>Products</span>
+        </a>
+        <a href="{% url 'billing:sale_list' %}" class="nav-link whitespace-nowrap {% if ns == 'billing' and view != 'pos' %}nav-link-active{% endif %}" {% if ns == 'billing' and view != 'pos' %}aria-current="page"{% endif %}>
+          {% icon "receipt-text" %} <span>Sales History</span>
+        </a>
+        <a href="{% url 'core:settings' %}" class="nav-link whitespace-nowrap {% if view == 'settings' %}nav-link-active{% endif %}" {% if view == 'settings' %}aria-current="page"{% endif %}>
+          {% icon "settings" %} <span>Settings</span>
+        </a>
+        <a href="{% url 'core:backup' %}" class="nav-link whitespace-nowrap {% if view == 'backup' %}nav-link-active{% endif %}" {% if view == 'backup' %}aria-current="page"{% endif %}>
+          {% icon "database-backup" %} <span>Backup &amp; Restore</span>
+        </a>
+      </nav>
+
+      <div class="hidden lg:block px-4 py-4 mt-auto">
+        <div class="rounded-lg border border-line bg-app/60 px-3 py-2.5">
+          <div class="flex items-center gap-2 text-[12px] font-medium text-ink">
+            {% icon "hard-drive" "h-3.5 w-3.5 text-muted" %} Works offline
+          </div>
+          <p class="text-[11px] text-muted mt-1 leading-snug">All data is stored on this computer. No internet required.</p>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main column -->
+    <div class="min-w-0 flex flex-col lg:min-h-screen">
+      <header class="app-topbar sticky top-0 z-20 h-16 shrink-0 bg-surface/90 backdrop-blur border-b border-line px-4 md:px-8 flex items-center justify-between gap-4">
+        <div class="min-w-0">
+          <h1 class="text-xl font-semibold truncate tracking-tight">{% block page_heading %}{{ page_title|default:"Dashboard" }}{% endblock %}</h1>
+          {% block breadcrumb %}{% endblock %}
+        </div>
+        <div class="flex items-center gap-2 sm:gap-3 shrink-0">
+          <span class="hidden md:inline-flex items-center gap-2 rounded-lg border border-line bg-surface px-3 h-9 text-[13px] font-medium text-ink max-w-[200px]">
+            {% icon "store" "h-4 w-4 text-muted shrink-0" %}
+            <span class="truncate">{{ shop.shop_name }}</span>
+          </span>
+          <span class="inline-flex items-center gap-2 rounded-lg bg-success/10 text-success px-3 h-9 text-[13px] font-medium" title="This application runs locally. Nothing is synced to the internet.">
+            {% icon "hard-drive" "h-4 w-4" %}
+            <span class="hidden sm:inline">Stored on this computer</span>
+          </span>
+        </div>
+      </header>
+
+      <main class="app-main flex-1 px-4 md:px-8 py-6 md:py-8">
+        {% if messages %}
+          <div class="no-print mb-5 space-y-2" role="status" aria-live="polite">
+            {% for message in messages %}
+              <div class="flex items-start gap-2.5 rounded-lg border px-3.5 py-3 text-sm shadow-xs
+                {% if message.tags == 'success' %}border-success/25 bg-success/[0.06] text-success
+                {% elif message.tags == 'error' %}border-danger/25 bg-danger/[0.06] text-danger
+                {% elif message.tags == 'warning' %}border-warning/25 bg-warning/[0.06] text-warning
+                {% else %}border-line bg-surface text-ink{% endif %}">
+                <span class="mt-0.5 shrink-0">
+                  {% if message.tags == 'success' %}{% icon "circle-check" "h-4 w-4" %}
+                  {% elif message.tags == 'error' %}{% icon "triangle-alert" "h-4 w-4" %}
+                  {% elif message.tags == 'warning' %}{% icon "triangle-alert" "h-4 w-4" %}
+                  {% else %}{% icon "info" "h-4 w-4" %}{% endif %}
+                </span>
+                <span class="leading-snug">{{ message }}</span>
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+
+        {% block content %}{% endblock %}
+      </main>
+    </div>
+  </div>
+  {% endwith %}
+  {% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,18 @@
+{% load icons %}
+{% comment %}
+Renders a single form field: label above, widget, hint, and inline errors.
+Adds a red border to the widget when the field is invalid.
+Usage: {% include "partials/form_field.html" with field=form.name %}
+{% endcomment %}
+<div class="mb-5{% if field.errors %} [&_input]:border-danger [&_textarea]:border-danger [&_select]:border-danger{% endif %}">
+  <label class="label" for="{{ field.id_for_label }}">
+    {{ field.label }}{% if field.field.required %} <span class="text-danger" aria-hidden="true">*</span>{% endif %}
+  </label>
+  {{ field }}
+  {% if field.help_text %}
+    <p class="field-hint">{{ field.help_text }}</p>
+  {% endif %}
+  {% for error in field.errors %}
+    <p class="field-error" role="alert">{% icon "circle-alert" "h-4 w-4 shrink-0 mt-px" %}<span>{{ error }}</span></p>
+  {% endfor %}
+</div>

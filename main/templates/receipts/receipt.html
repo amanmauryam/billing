@@ -1,0 +1,70 @@
+{% load money %}
+{% comment %}
+Thermal receipt. Renders entirely from saved sale snapshots so historical
+bills stay accurate after products change. Expects `sale` and `shop`.
+Structural styling is inline so printing does not depend on the app stylesheet.
+{% endcomment %}
+{% with w=shop.receipt_width %}
+<div class="receipt-sheet bg-white text-black mx-auto"
+     style="width: {% if w == '80' %}80mm{% else %}58mm{% endif %}; padding: 3mm; font-family: Arial, 'Segoe UI', sans-serif; font-size: 11px; line-height: 1.4; color:#000;">
+
+  <div style="text-align:center;">
+    <div style="font-size:16px; font-weight:700; letter-spacing:0.3px;">{{ shop.shop_name }}</div>
+    {% if shop.address %}<div style="font-size:10px; margin-top:2px;">{{ shop.address }}</div>{% endif %}
+    {% if shop.phone %}<div style="font-size:10px;">Phone: {{ shop.phone }}</div>{% endif %}
+    {% if shop.gstin %}<div style="font-size:10px;">GSTIN: {{ shop.gstin }}</div>{% endif %}
+  </div>
+
+  <div style="border-top:1px dashed #000; margin:6px 0;"></div>
+
+  <div style="display:flex; justify-content:space-between; font-size:10px;">
+    <span>Bill No</span><span style="font-weight:700;">{{ sale.bill_number }}</span>
+  </div>
+  <div style="display:flex; justify-content:space-between; font-size:10px;">
+    <span>Date</span><span>{{ sale.created_at|date:"d/m/Y H:i" }}</span>
+  </div>
+  <div style="display:flex; justify-content:space-between; font-size:10px;">
+    <span>Items</span><span>{{ sale.item_count }}</span>
+  </div>
+  <div style="display:flex; justify-content:space-between; font-size:10px;">
+    <span>Pricing</span><span>{% if sale.pricing_mode_snapshot == 'inclusive' %}GST Inclusive{% else %}GST Exclusive{% endif %}</span>
+  </div>
+
+  <div style="border-top:1px dashed #000; margin:6px 0;"></div>
+
+  {% for item in items %}
+    <div class="receipt-item" style="margin-bottom:6px;">
+      <div style="font-weight:600;">{{ item.product_name_snapshot }}</div>
+      {% if item.barcode_snapshot %}<div style="font-size:9px; color:#000;">{{ item.barcode_snapshot }}</div>{% endif %}
+      <div style="display:flex; justify-content:space-between; margin-top:1px;">
+        <span>{{ item.quantity }} &times; {{ item.unit_price|rupees }} <span style="font-size:9px;">(GST {{ item.gst_rate_snapshot }}%)</span></span>
+        <span style="font-weight:600;">{{ item.line_total|rupees }}</span>
+      </div>
+    </div>
+  {% endfor %}
+
+  <div style="border-top:1px dashed #000; margin:6px 0;"></div>
+
+  <table style="width:100%; font-size:11px; border-collapse:collapse;">
+    <tr><td style="padding:1px 0;">Subtotal</td><td style="text-align:right;">{{ sale.subtotal|rupees }}</td></tr>
+    <tr><td style="padding:1px 0;">Taxable amount</td><td style="text-align:right;">{{ sale.taxable_total|rupees }}</td></tr>
+    <tr><td style="padding:1px 0;">GST</td><td style="text-align:right;">{{ sale.tax_total|rupees }}</td></tr>
+  </table>
+
+  <div style="border-top:1px solid #000; margin:6px 0 4px;"></div>
+  <div style="display:flex; justify-content:space-between; font-size:15px; font-weight:700;">
+    <span>GRAND TOTAL</span><span>{{ sale.grand_total|rupees }}</span>
+  </div>
+
+  {% if sale.payment_method %}
+    <div style="margin-top:6px; font-size:10px;">Payment: {{ sale.get_payment_method_display }}</div>
+  {% endif %}
+
+  <div style="border-top:1px dashed #000; margin:8px 0 6px;"></div>
+
+  {% if shop.receipt_footer %}
+    <div style="text-align:center; font-size:10px;">{{ shop.receipt_footer }}</div>
+  {% endif %}
+  <div style="text-align:center; font-size:8px; margin-top:4px;">Computer-generated receipt</div>
+</div>
+{% endwith %}

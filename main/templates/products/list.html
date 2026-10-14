@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+{% load money icons %}
+
+{% block content %}
+<div class="flex flex-wrap items-end justify-between gap-4 mb-6">
+  <div>
+    <h2 class="text-2xl font-semibold tracking-tight">Product catalogue</h2>
+    <p class="text-muted mt-1">{{ total_count }} product{{ total_count|pluralize }} shown{% if query %} for &ldquo;{{ query }}&rdquo;{% endif %}.</p>
+  </div>
+  <a href="{% url 'products:create' %}" class="btn-primary btn-lg">
+    {% icon "plus" "h-[18px] w-[18px]" %} Add Product
+  </a>
+</div>
+
+<div class="card mb-5 p-2.5 flex flex-wrap items-center gap-3">
+  <form method="get" class="flex-1 min-w-[220px]">
+    <input type="hidden" name="status" value="{{ status }}">
+    <div class="relative">
+      <span class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted">{% icon "search" "h-4 w-4" %}</span>
+      <input class="input pl-9" type="search" name="q" value="{{ query }}" placeholder="Search by name or barcode…" autocomplete="off" aria-label="Search products">
+    </div>
+  </form>
+  <div class="flex items-center gap-1 rounded-lg bg-app p-1" role="tablist" aria-label="Filter products">
+    {% with base="products:list" %}
+    <a href="?status=active{% if query %}&q={{ query }}{% endif %}" class="px-3 h-8 inline-flex items-center rounded-md text-[13px] font-medium transition-colors {% if status == 'active' %}bg-surface text-ink shadow-xs{% else %}text-muted hover:text-ink{% endif %}">Active</a>
+    <a href="?status=low{% if query %}&q={{ query }}{% endif %}" class="px-3 h-8 inline-flex items-center rounded-md text-[13px] font-medium transition-colors {% if status == 'low' %}bg-surface text-ink shadow-xs{% else %}text-muted hover:text-ink{% endif %}">Low stock</a>
+    <a href="?status=inactive{% if query %}&q={{ query }}{% endif %}" class="px-3 h-8 inline-flex items-center rounded-md text-[13px] font-medium transition-colors {% if status == 'inactive' %}bg-surface text-ink shadow-xs{% else %}text-muted hover:text-ink{% endif %}">Inactive</a>
+    <a href="?status=all{% if query %}&q={{ query }}{% endif %}" class="px-3 h-8 inline-flex items-center rounded-md text-[13px] font-medium transition-colors {% if status == 'all' %}bg-surface text-ink shadow-xs{% else %}text-muted hover:text-ink{% endif %}">All</a>
+    {% endwith %}
+  </div>
+</div>
+
+<div class="card overflow-hidden">
+  {% if page.object_list %}
+    <div class="overflow-x-auto">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Product</th>
+            <th class="text-right">Price</th>
+            <th class="text-right">GST</th>
+            <th class="text-right">Stock</th>
+            <th>Status</th>
+            <th class="text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for product in page.object_list %}
+            <tr>
+              <td>
+                <div class="font-medium text-ink">{{ product.name }}</div>
+                <div class="text-[12px] text-muted tnum">{{ product.barcode|default:"No barcode" }}</div>
+              </td>
+              <td class="num font-medium">{{ product.selling_price|rupees }}</td>
+              <td class="num text-muted">{{ product.gst_rate }}%</td>
+              <td class="num">
+                {% if product.stock_status == 'out' %}
+                  <span class="badge-out">{% icon "package-x" "h-3.5 w-3.5" %} Out</span>
+                {% elif product.stock_status == 'low' %}
+                  <span class="badge-low">{{ product.stock_quantity }} low</span>
+                {% else %}
+                  <span class="text-ink font-medium">{{ product.stock_quantity }}</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if product.is_active %}<span class="badge-ok">Active</span>
+                {% else %}<span class="badge-muted">Inactive</span>{% endif %}
+              </td>
+              <td>
+                <div class="flex items-center justify-end gap-1">
+                  <a href="{% url 'products:edit' product.pk %}" class="btn-icon" title="Edit {{ product.name }}" aria-label="Edit {{ product.name }}">{% icon "pencil" "h-4 w-4" %}</a>
+                  <a href="{% url 'products:stock' product.pk %}" class="btn-icon" title="Stock history" aria-label="Stock history for {{ product.name }}">{% icon "boxes" "h-4 w-4" %}</a>
+                  <form method="post" action="{% url 'products:toggle' product.pk %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn-icon {% if product.is_active %}hover:text-danger hover:bg-danger/10{% else %}hover:text-success hover:bg-success/10{% endif %}"
+                            title="{% if product.is_active %}Deactivate{% else %}Activate{% endif %} {{ product.name }}"
+                            aria-label="{% if product.is_active %}Deactivate{% else %}Activate{% endif %} {{ product.name }}"
+                            onclick="return confirm('{% if product.is_active %}Deactivate{% else %}Activate{% endif %} \'{{ product.name|escapejs }}\'?');">
+                      {% if product.is_active %}{% icon "ban" "h-4 w-4" %}{% else %}{% icon "power" "h-4 w-4" %}{% endif %}
+                    </button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="empty-state">
+      {% if query %}
+        <span class="empty-icon">{% icon "search" "h-6 w-6" %}</span>
+        <h3 class="text-base font-semibold">No matches for &ldquo;{{ query }}&rdquo;</h3>
+        <p class="text-muted mt-1">Try a different name or barcode.</p>
+        <a href="{% url 'products:list' %}" class="btn-secondary mt-5">Clear search</a>
+      {% elif status == 'inactive' %}
+        <span class="empty-icon">{% icon "ban" "h-6 w-6" %}</span>
+        <h3 class="text-base font-semibold">No inactive products</h3>
+        <p class="text-muted mt-1">Deactivated products will appear here.</p>
+      {% elif status == 'low' %}
+        <span class="empty-icon">{% icon "circle-check" "h-6 w-6" %}</span>
+        <h3 class="text-base font-semibold">No low-stock products</h3>
+        <p class="text-muted mt-1">Everything is above the restock threshold.</p>
+      {% else %}
+        <span class="empty-icon">{% icon "package" "h-6 w-6" %}</span>
+        <h3 class="text-base font-semibold">No products yet</h3>
+        <p class="text-muted mt-1">Add your first product to begin selling.</p>
+        <a href="{% url 'products:create' %}" class="btn-primary mt-5">{% icon "plus" "h-4 w-4" %} Add product</a>
+      {% endif %}
+    </div>
+  {% endif %}
+</div>
+
+{% if page.paginator.num_pages > 1 %}
+  <nav class="flex items-center justify-between mt-5" aria-label="Pagination">
+    <div class="text-[13px] text-muted">Page {{ page.number }} of {{ page.paginator.num_pages }}</div>
+    <div class="flex gap-2">
+      {% if page.has_previous %}
+        <a class="btn-secondary h-9" href="?q={{ query }}&status={{ status }}&page={{ page.previous_page_number }}">{% icon "chevron-left" "h-4 w-4" %} Previous</a>
+      {% else %}
+        <span class="btn-secondary h-9 opacity-50 pointer-events-none">{% icon "chevron-left" "h-4 w-4" %} Previous</span>
+      {% endif %}
+      {% if page.has_next %}
+        <a class="btn-secondary h-9" href="?q={{ query }}&status={{ status }}&page={{ page.next_page_number }}">Next {% icon "chevron-right" "h-4 w-4" %}</a>
+      {% else %}
+        <span class="btn-secondary h-9 opacity-50 pointer-events-none">Next {% icon "chevron-right" "h-4 w-4" %}</span>
+      {% endif %}
+    </div>
+  </nav>
+{% endif %}
+{% endblock %}

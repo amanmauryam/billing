@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% load money icons %}
+
+{% block content %}
+<div class="flex flex-wrap items-end justify-between gap-4 mb-6">
+  <div>
+    <h2 class="text-2xl font-semibold tracking-tight">Sales history</h2>
+    <p class="text-muted mt-1">{{ total_count }} bill{{ total_count|pluralize }} on record. Receipts are saved permanently.</p>
+  </div>
+  <a href="{% url 'billing:pos' %}" class="btn-primary btn-lg">{% icon "plus" "h-[18px] w-[18px]" %} New Bill</a>
+</div>
+
+<form method="get" class="card mb-5 p-2.5 flex flex-wrap items-center gap-3">
+  <div class="relative flex-1 min-w-[220px]">
+    <span class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted">{% icon "search" "h-4 w-4" %}</span>
+    <input class="input pl-9 tnum" type="search" name="bill" value="{{ bill_number }}" placeholder="Search by bill number…" autocomplete="off" aria-label="Search by bill number">
+  </div>
+  <div class="relative">
+    <span class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted">{% icon "file-text" "h-4 w-4" %}</span>
+    <input class="input pl-9 w-[190px]" type="date" name="date" value="{{ date_str }}" aria-label="Filter by date">
+  </div>
+  <button type="submit" class="btn-secondary">Filter</button>
+  {% if has_filters %}<a href="{% url 'billing:sale_list' %}" class="btn-ghost">Reset</a>{% endif %}
+</form>
+
+<div class="card overflow-hidden">
+  {% if page.object_list %}
+    <div class="overflow-x-auto">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Bill number</th>
+            <th>Date &amp; time</th>
+            <th class="text-right">Items</th>
+            <th class="text-right">Grand total</th>
+            <th class="text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for sale in page.object_list %}
+            <tr>
+              <td>
+                <a href="{% url 'billing:sale_detail' sale.bill_number %}" class="font-medium text-ink hover:text-primary tnum">{{ sale.bill_number }}</a>
+                <div class="text-[12px] text-muted">{% if sale.pricing_mode_snapshot == 'inclusive' %}GST-inclusive{% else %}GST-exclusive{% endif %}</div>
+              </td>
+              <td class="text-muted whitespace-nowrap">{{ sale.created_at|date:"d M Y, H:i" }}</td>
+              <td class="num text-muted">{{ sale.item_count }}</td>
+              <td class="num font-semibold text-ink">{{ sale.grand_total|rupees }}</td>
+              <td>
+                <div class="flex justify-end">
+                  <a href="{% url 'billing:sale_detail' sale.bill_number %}" class="btn-secondary h-9 text-[13px]">{% icon "receipt-text" "h-4 w-4" %} Receipt</a>
+                </div>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="empty-state">
+      {% if has_filters %}
+        <span class="empty-icon">{% icon "search" "h-6 w-6" %}</span>
+        <h3 class="text-base font-semibold">No bills match your search</h3>
+        <p class="text-muted mt-1">Try a different bill number or date.</p>
+        <a href="{% url 'billing:sale_list' %}" class="btn-secondary mt-5">Clear filters</a>
+      {% else %}
+        <span class="empty-icon">{% icon "receipt-text" "h-6 w-6" %}</span>
+        <h3 class="text-base font-semibold">No sales recorded yet</h3>
+        <p class="text-muted mt-1">Completed bills will appear here for reprinting.</p>
+        <a href="{% url 'billing:pos' %}" class="btn-primary mt-5">{% icon "plus" "h-4 w-4" %} Make your first sale</a>
+      {% endif %}
+    </div>
+  {% endif %}
+</div>
+
+{% if page.paginator.num_pages > 1 %}
+  <nav class="flex items-center justify-between mt-5" aria-label="Pagination">
+    <div class="text-[13px] text-muted">Page {{ page.number }} of {{ page.paginator.num_pages }}</div>
+    <div class="flex gap-2">
+      {% if page.has_previous %}
+        <a class="btn-secondary h-9" href="?bill={{ bill_number }}&date={{ date_str }}&page={{ page.previous_page_number }}">{% icon "chevron-left" "h-4 w-4" %} Previous</a>
+      {% else %}
+        <span class="btn-secondary h-9 opacity-50 pointer-events-none">{% icon "chevron-left" "h-4 w-4" %} Previous</span>
+      {% endif %}
+      {% if page.has_next %}
+        <a class="btn-secondary h-9" href="?bill={{ bill_number }}&date={{ date_str }}&page={{ page.next_page_number }}">Next {% icon "chevron-right" "h-4 w-4" %}</a>
+      {% else %}
+        <span class="btn-secondary h-9 opacity-50 pointer-events-none">Next {% icon "chevron-right" "h-4 w-4" %}</span>
+      {% endif %}
+    </div>
+  </nav>
+{% endif %}
+{% endblock %}

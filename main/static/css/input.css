@@ -1,0 +1,322 @@
+@import "tailwindcss";
+
+@source "../../templates/**/*.html";
+@source "../js/**/*.js";
+
+/* ------------------------------------------------------------------ *
+ * Locally bundled Inter (SIL OFL 1.1). See static/fonts/Inter-LICENSE.txt
+ * ------------------------------------------------------------------ */
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url("../fonts/inter-latin-wght-normal.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+    U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193,
+    U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url("../fonts/inter-latin-ext-wght-normal.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF,
+    U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020,
+    U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+/* ------------------------------------------------------------------ *
+ * Design tokens
+ * ------------------------------------------------------------------ */
+@theme {
+  --color-app: #f5f6f8;
+  --color-surface: #ffffff;
+  --color-ink: #151922;
+  --color-muted: #697386;
+  --color-line: #e7e9ee;
+  --color-primary: #315efb;
+  --color-primary-hover: #2449d8;
+  --color-success: #16845b;
+  --color-warning: #b7791f;
+  --color-danger: #d14343;
+
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI",
+    Arial, sans-serif;
+
+  --shadow-xs: 0 1px 2px rgba(16, 24, 40, 0.04);
+  --shadow-card: 0 1px 2px rgba(16, 24, 40, 0.04), 0 1px 3px rgba(16, 24, 40, 0.05);
+  --shadow-pop: 0 12px 32px -8px rgba(16, 24, 40, 0.18), 0 4px 12px -4px rgba(16, 24, 40, 0.1);
+}
+
+/* ------------------------------------------------------------------ *
+ * Base
+ * ------------------------------------------------------------------ */
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    scrollbar-gutter: stable;
+  }
+
+  body {
+    @apply bg-app text-ink font-sans text-sm antialiased;
+    font-feature-settings: "cv11", "ss01";
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply font-semibold text-ink tracking-tight;
+  }
+
+  a {
+    @apply transition-colors duration-150;
+  }
+
+  :focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--color-primary) 60%, transparent);
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background: color-mix(in srgb, var(--color-primary) 22%, transparent);
+  }
+
+  /* Refined, unobtrusive scrollbars */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: #cfd3dc transparent;
+  }
+  *::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  *::-webkit-scrollbar-thumb {
+    background: #cfd3dc;
+    border-radius: 999px;
+    border: 3px solid transparent;
+    background-clip: content-box;
+  }
+  *::-webkit-scrollbar-thumb:hover {
+    background: #b6bbc7;
+    background-clip: content-box;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.001ms !important;
+      transition-duration: 0.001ms !important;
+    }
+  }
+}
+
+/* ------------------------------------------------------------------ *
+ * Reusable utilities
+ * ------------------------------------------------------------------ */
+@utility tnum {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+@utility btn {
+  @apply inline-flex items-center justify-center gap-2 rounded-lg px-3.5 h-10
+    text-sm font-medium whitespace-nowrap select-none cursor-pointer
+    transition-colors duration-150
+    disabled:opacity-50 disabled:pointer-events-none;
+}
+
+@utility badge {
+  @apply inline-flex items-center gap-1 rounded-md px-2 py-0.5
+    text-xs font-medium leading-5;
+}
+
+/* ------------------------------------------------------------------ *
+ * Components
+ * ------------------------------------------------------------------ */
+@layer components {
+  .btn-primary {
+    @apply btn bg-primary text-white shadow-xs hover:bg-primary-hover;
+  }
+
+  .btn-secondary {
+    @apply btn border border-line bg-surface text-ink shadow-xs hover:bg-app;
+  }
+
+  .btn-ghost {
+    @apply btn text-muted hover:bg-app hover:text-ink;
+  }
+
+  .btn-danger {
+    @apply btn bg-danger text-white shadow-xs hover:brightness-95;
+  }
+
+  .btn-icon {
+    @apply btn h-9 w-9 p-0 text-muted hover:bg-app hover:text-ink;
+  }
+
+  .btn-lg {
+    @apply h-12 px-5 text-[15px];
+  }
+
+  .input {
+    @apply w-full h-10 rounded-lg border border-line bg-surface px-3 text-sm
+      text-ink placeholder:text-muted transition duration-150
+      focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/10;
+  }
+
+  .input-lg {
+    @apply h-12 text-base;
+  }
+
+  textarea.input {
+    @apply h-auto py-2.5;
+  }
+
+  .label {
+    @apply block text-[13px] font-medium text-ink mb-1.5;
+  }
+
+  .field-hint {
+    @apply text-[13px] text-muted mt-1.5;
+  }
+
+  .field-error {
+    @apply flex items-start gap-1.5 text-[13px] text-danger mt-1.5;
+  }
+
+  .card {
+    @apply bg-surface border border-line rounded-xl shadow-card;
+  }
+
+  .card-section-head {
+    @apply flex items-center justify-between gap-3 px-5 py-4 border-b border-line;
+  }
+
+  .badge-ok {
+    @apply badge bg-success/10 text-success;
+  }
+  .badge-low {
+    @apply badge bg-warning/10 text-warning;
+  }
+  .badge-out {
+    @apply badge bg-danger/10 text-danger;
+  }
+  .badge-muted {
+    @apply badge bg-app text-muted border border-line;
+  }
+  .badge-primary {
+    @apply badge bg-primary/10 text-primary;
+  }
+
+  /* Navigation */
+  .nav-link {
+    @apply flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium
+      text-muted transition-colors duration-150 hover:bg-app hover:text-ink;
+  }
+  .nav-link-active {
+    @apply bg-primary/10 text-primary hover:bg-primary/10 hover:text-primary;
+  }
+
+  /* Tables */
+  .table {
+    @apply w-full text-left border-collapse text-sm;
+  }
+  .table thead th {
+    @apply px-4 py-3 text-xs font-medium text-muted border-b border-line
+      whitespace-nowrap;
+  }
+  .table tbody td {
+    @apply px-4 py-3.5 border-b border-line align-middle;
+  }
+  .table tbody tr {
+    @apply transition-colors duration-100;
+  }
+  .table tbody tr:hover {
+    @apply bg-app/70;
+  }
+  .table tbody tr:last-child td {
+    @apply border-b-0;
+  }
+  .num {
+    @apply tnum text-right;
+  }
+
+  /* Empty state */
+  .empty-state {
+    @apply flex flex-col items-center justify-center text-center py-14 px-6;
+  }
+  .empty-icon {
+    @apply flex h-12 w-12 items-center justify-center rounded-xl
+      bg-app text-muted mb-4;
+  }
+
+  /* Stat card */
+  .stat-label {
+    @apply flex items-center gap-2 text-[13px] font-medium text-muted;
+  }
+  .stat-value {
+    @apply mt-2.5 text-3xl font-semibold tracking-tight tnum text-ink;
+  }
+}
+
+/* ------------------------------------------------------------------ *
+ * Print
+ * ------------------------------------------------------------------ */
+@media print {
+  @page {
+    margin: 2mm;
+  }
+
+  html,
+  body {
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #fff !important;
+    color: #000 !important;
+    font-family: Arial, "Segoe UI", sans-serif !important;
+    font-size: 10pt !important;
+  }
+
+  .no-print,
+  .app-sidebar,
+  .app-topbar {
+    display: none !important;
+  }
+
+  .app-shell {
+    display: block !important;
+  }
+
+  .app-main {
+    padding: 0 !important;
+  }
+
+  .print\:block {
+    display: block !important;
+  }
+
+  .receipt-sheet {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+
+  .receipt-item {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  a[href]::after {
+    content: none !important;
+  }
+}

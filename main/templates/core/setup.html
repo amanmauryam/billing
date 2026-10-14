@@ -1,0 +1,77 @@
+{% load icons %}
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Shop setup · Shop POS</title>
+  <link rel="stylesheet" href="/static/css/output.css">
+</head>
+<body class="min-h-full bg-app">
+  <div class="min-h-screen flex flex-col items-center px-4 py-10">
+    <div class="w-full max-w-2xl">
+      <div class="flex items-center gap-2.5 justify-center mb-8">
+        <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-white">
+          {% icon "scan-barcode" "h-5 w-5" %}
+        </span>
+        <div>
+          <div class="font-semibold tracking-tight leading-tight">Shop POS</div>
+          <div class="text-[11px] text-muted leading-tight">Offline Edition</div>
+        </div>
+      </div>
+
+      <div class="text-center mb-7">
+        <h1 class="text-2xl font-semibold tracking-tight">Set up your shop</h1>
+        <p class="text-muted mt-2 max-w-md mx-auto">These details appear on every receipt. You can change them any time in Settings.</p>
+      </div>
+
+      {% if messages %}
+        <div class="mb-5 space-y-2">
+          {% for message in messages %}
+            <div class="rounded-lg border border-danger/25 bg-danger/[0.06] px-3.5 py-3 text-sm text-danger">{{ message }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      <form method="post" class="card p-6 sm:p-8" novalidate>
+        {% csrf_token %}
+        {% if form.non_field_errors %}
+          <div class="mb-5 flex items-start gap-2 rounded-lg border border-danger/25 bg-danger/[0.06] px-3.5 py-3 text-sm text-danger">
+            {% icon "triangle-alert" "h-4 w-4 mt-0.5 shrink-0" %}<div>{{ form.non_field_errors }}</div>
+          </div>
+        {% endif %}
+
+        <div class="flex items-center gap-2.5 mb-5">
+          <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-app text-muted">{% icon "store" "h-4 w-4" %}</span>
+          <h2 class="text-[15px] font-semibold">Shop identity</h2>
+        </div>
+        {% include "partials/form_field.html" with field=form.shop_name %}
+        {% include "partials/form_field.html" with field=form.address %}
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-5">
+          {% include "partials/form_field.html" with field=form.phone %}
+          {% include "partials/form_field.html" with field=form.gstin %}
+        </div>
+
+        <div class="flex items-center gap-2.5 mb-5 mt-2 pt-6 border-t border-line">
+          <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-app text-muted">{% icon "percent" "h-4 w-4" %}</span>
+          <h2 class="text-[15px] font-semibold">Billing &amp; receipts</h2>
+        </div>
+        {% include "partials/form_field.html" with field=form.pricing_mode %}
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-5">
+          {% include "partials/form_field.html" with field=form.receipt_width %}
+          {% include "partials/form_field.html" with field=form.low_stock_threshold %}
+        </div>
+        {% include "partials/form_field.html" with field=form.receipt_footer %}
+
+        <button type="submit" class="btn-primary btn-lg w-full mt-2">
+          {% icon "check" "h-[18px] w-[18px]" %} Finish setup &amp; start billing
+        </button>
+      </form>
+
+      <p class="text-center text-[13px] text-muted mt-6 flex items-center justify-center gap-1.5">
+        {% icon "hard-drive" "h-3.5 w-3.5" %} Everything is stored locally on this computer.
+      </p>
+    </div>
+  </div>
+</body>
+</html>

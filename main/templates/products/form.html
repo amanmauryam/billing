@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% load icons %}
+
+{% block content %}
+<div class="flex flex-wrap items-end justify-between gap-4 mb-6">
+  <div>
+    <h2 class="text-2xl font-semibold tracking-tight">{% if is_create %}Add a product{% else %}{{ product.name }}{% endif %}</h2>
+    <p class="text-muted mt-1">{% if is_create %}Create a catalogue item with its price, GST rate, and opening stock.{% else %}Update this product&rsquo;s details. Changes affect future bills only.{% endif %}</p>
+  </div>
+  <a href="{% url 'products:list' %}" class="btn-secondary">{% icon "arrow-left" "h-4 w-4" %} Back to products</a>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 max-w-5xl">
+  <div class="lg:col-span-2 card p-6">
+    <form method="post" novalidate>
+      {% csrf_token %}
+      {% if form.non_field_errors %}
+        <div class="mb-5 flex items-start gap-2 rounded-lg border border-danger/25 bg-danger/[0.06] px-3.5 py-3 text-sm text-danger">
+          {% icon "triangle-alert" "h-4 w-4 mt-0.5 shrink-0" %}
+          <div>{{ form.non_field_errors }}</div>
+        </div>
+      {% endif %}
+
+      {% include "partials/form_field.html" with field=form.name %}
+
+      <div class="mb-5{% if form.barcode.errors %} [&_input]:border-danger{% endif %}">
+        <label class="label" for="{{ form.barcode.id_for_label }}">{{ form.barcode.label }}</label>
+        <div class="relative">
+          <span class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted">{% icon "scan-barcode" "h-4 w-4" %}</span>
+          <input type="text" name="{{ form.barcode.name }}" id="{{ form.barcode.id_for_label }}"
+                 value="{{ form.barcode.value|default_if_none:'' }}" class="input pl-9 tnum"
+                 placeholder="Scan or type a barcode (optional)" autocomplete="off" inputmode="numeric">
+        </div>
+        <p class="field-hint">Optional. Each barcode must be unique across products.</p>
+        {% for error in form.barcode.errors %}<p class="field-error" role="alert">{% icon "circle-alert" "h-4 w-4 shrink-0 mt-px" %}<span>{{ error }}</span></p>{% endfor %}
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-5">
+        <div class="mb-5{% if form.selling_price.errors %} [&_input]:border-danger{% endif %}">
+          <label class="label" for="{{ form.selling_price.id_for_label }}">Selling price <span class="text-danger" aria-hidden="true">*</span></label>
+          <div class="relative">
+            <span class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted text-sm">₹</span>
+            <input type="number" name="{{ form.selling_price.name }}" id="{{ form.selling_price.id_for_label }}"
+                   value="{{ form.selling_price.value|default_if_none:'' }}" class="input pl-7 tnum"
+                   step="0.01" min="0" inputmode="decimal" required>
+          </div>
+          {% for error in form.selling_price.errors %}<p class="field-error" role="alert">{% icon "circle-alert" "h-4 w-4 shrink-0 mt-px" %}<span>{{ error }}</span></p>{% endfor %}
+        </div>
+
+        <div class="mb-5{% if form.gst_rate.errors %} [&_input]:border-danger{% endif %}">
+          <label class="label" for="{{ form.gst_rate.id_for_label }}">GST rate <span class="text-danger" aria-hidden="true">*</span></label>
+          <div class="relative">
+            <input type="number" name="{{ form.gst_rate.name }}" id="{{ form.gst_rate.id_for_label }}"
+                   value="{{ form.gst_rate.value|default_if_none:'' }}" class="input pr-8 tnum"
+                   step="0.01" min="0" max="100" inputmode="decimal" required>
+            <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-muted text-sm">%</span>
+          </div>
+          {% for error in form.gst_rate.errors %}<p class="field-error" role="alert">{% icon "circle-alert" "h-4 w-4 shrink-0 mt-px" %}<span>{{ error }}</span></p>{% endfor %}
+        </div>
+      </div>
+
+      <div class="mb-5{% if form.stock_quantity.errors %} [&_input]:border-danger{% endif %}">
+        <label class="label" for="{{ form.stock_quantity.id_for_label }}">{% if is_create %}Opening stock quantity{% else %}Stock quantity{% endif %} <span class="text-danger" aria-hidden="true">*</span></label>
+        <input type="number" name="{{ form.stock_quantity.name }}" id="{{ form.stock_quantity.id_for_label }}"
+               value="{{ form.stock_quantity.value|default_if_none:'' }}" class="input tnum"
+               step="1" min="0" inputmode="numeric" required>
+        {% if not is_create %}<p class="field-hint">Changing this records a stock adjustment in the history.</p>{% endif %}
+        {% for error in form.stock_quantity.errors %}<p class="field-error" role="alert">{% icon "circle-alert" "h-4 w-4 shrink-0 mt-px" %}<span>{{ error }}</span></p>{% endfor %}
+      </div>
+
+      {% if form.is_active %}
+        <div class="pt-1 pb-2 border-t border-line mt-1 pt-5">
+          <label class="flex items-start gap-3 cursor-pointer select-none">
+            {{ form.is_active }}
+            <span class="mt-0.5 relative h-5 w-9 shrink-0 rounded-full bg-line transition-colors duration-150
+                         after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:h-4 after:w-4
+                         after:rounded-full after:bg-white after:shadow-xs after:transition-transform duration-150
+                         peer-checked:bg-primary peer-checked:after:translate-x-4"></span>
+            <span>
+              <span class="text-sm font-medium text-ink">Active</span>
+              <span class="block text-[13px] text-muted">Available for sale in Point of Sale. Inactive products stay in history.</span>
+            </span>
+          </label>
+        </div>
+      {% endif %}
+
+      <div class="flex flex-wrap gap-3 mt-6 pt-5 border-t border-line">
+        <button type="submit" class="btn-primary">{% if is_create %}{% icon "plus" "h-4 w-4" %} Add product{% else %}{% icon "check" "h-4 w-4" %} Save changes{% endif %}</button>
+        <a href="{% url 'products:list' %}" class="btn-secondary">Cancel</a>
+        {% if not is_create %}
+          <a href="{% url 'products:stock' product.pk %}" class="btn-ghost ml-auto">{% icon "boxes" "h-4 w-4" %} Stock history</a>
+        {% endif %}
+      </div>
+    </form>
+  </div>
+
+  <aside class="lg:col-span-1 space-y-4">
+    <div class="card p-5">
+      <div class="flex items-center gap-2 text-[13px] font-semibold text-ink">{% icon "percent" "h-4 w-4 text-muted" %} GST pricing</div>
+      <p class="text-[13px] text-muted mt-2 leading-relaxed">
+        The shop is set to
+        {% if shop.pricing_mode == 'inclusive' %}<span class="font-medium text-ink">GST-inclusive</span> pricing — the selling price already contains GST.
+        {% else %}<span class="font-medium text-ink">GST-exclusive</span> pricing — GST is added on top of the selling price.{% endif %}
+      </p>
+      <a href="{% url 'core:settings' %}" class="text-[13px] text-primary hover:underline mt-2 inline-block">Change in Settings</a>
+    </div>
+    {% if not is_create %}
+      <div class="card p-5">
+        <div class="flex items-center gap-2 text-[13px] font-semibold text-ink">{% icon "boxes" "h-4 w-4 text-muted" %} Current stock</div>
+        <div class="stat-value text-2xl mt-2 tnum">{{ product.stock_quantity }}</div>
+        <p class="text-[13px] text-muted mt-1">units on hand</p>
+      </div>
+    {% endif %}
+    <div class="card p-5">
+      <div class="flex items-center gap-2 text-[13px] font-semibold text-ink">{% icon "shield-check" "h-4 w-4 text-muted" %} Historical accuracy</div>
+      <p class="text-[13px] text-muted mt-2 leading-relaxed">Receipts store the name, price, and GST used at the time of sale, so past bills never change when you edit this product.</p>
+    </div>
+  </aside>
+</div>
+{% endblock %}

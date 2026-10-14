@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% load money icons %}
+
+{% block head %}
+<style>
+  @media print {
+    @page { size: {% if shop.receipt_width == '80' %}80mm{% else %}58mm{% endif %} auto; margin: 2mm; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="mb-6 flex flex-wrap items-end justify-between gap-4 no-print">
+  <div>
+    <h2 class="text-2xl font-semibold tracking-tight tnum">{{ sale.bill_number }}</h2>
+    <p class="text-muted mt-1">{{ sale.created_at|date:"l, d F Y · H:i" }} · {{ sale.item_count }} item{{ sale.item_count|pluralize }}</p>
+  </div>
+  <div class="flex gap-2">
+    <button type="button" onclick="window.print()" class="btn-primary">{% icon "printer" "h-4 w-4" %} Print receipt</button>
+    <a href="{% url 'billing:pos' %}" class="btn-secondary">{% icon "plus" "h-4 w-4" %} New bill</a>
+    <a href="{% url 'billing:sale_list' %}" class="btn-ghost">{% icon "arrow-left" "h-4 w-4" %} Back</a>
+  </div>
+</div>
+
+<div class="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_340px] gap-6">
+  <!-- Receipt preview -->
+  <div class="no-print rounded-xl border border-line bg-app/60 p-4 sm:p-8 flex justify-center">
+    {% include "receipts/receipt.html" with sale=sale items=items shop=shop %}
+  </div>
+  <!-- Receipt-only container used when printing -->
+  <div class="hidden print:block">
+    {% include "receipts/receipt.html" with sale=sale items=items shop=shop %}
+  </div>
+
+  <aside class="no-print space-y-5">
+    <div class="card p-5">
+      <h3 class="text-[15px] font-semibold mb-3">Bill summary</h3>
+      <dl class="space-y-2.5 text-[13px]">
+        <div class="flex justify-between"><dt class="text-muted">Bill number</dt><dd class="font-medium tnum">{{ sale.bill_number }}</dd></div>
+        <div class="flex justify-between"><dt class="text-muted">Date</dt><dd>{{ sale.created_at|date:"d M Y, H:i" }}</dd></div>
+        <div class="flex justify-between"><dt class="text-muted">Pricing mode</dt><dd>{% if sale.pricing_mode_snapshot == 'inclusive' %}GST-inclusive{% else %}GST-exclusive{% endif %}</dd></div>
+        <div class="flex justify-between"><dt class="text-muted">Payment</dt><dd>{{ sale.get_payment_method_display|default:"Not recorded" }}</dd></div>
+      </dl>
+      <div class="border-t border-line mt-4 pt-4 space-y-2 text-[13px]">
+        <div class="flex justify-between"><dt class="text-muted">Subtotal</dt><dd class="tnum">{{ sale.subtotal|rupees }}</dd></div>
+        <div class="flex justify-between"><dt class="text-muted">Taxable amount</dt><dd class="tnum">{{ sale.taxable_total|rupees }}</dd></div>
+        <div class="flex justify-between"><dt class="text-muted">GST</dt><dd class="tnum">{{ sale.tax_total|rupees }}</dd></div>
+      </div>
+      <div class="flex items-end justify-between border-t border-line mt-4 pt-4">
+        <span class="text-[13px] font-medium text-muted">Grand total</span>
+        <span class="text-2xl font-semibold tracking-tight tnum">{{ sale.grand_total|rupees }}</span>
+      </div>
+    </div>
+
+    <div class="card p-5">
+      <div class="flex items-center gap-2 text-[13px] font-semibold text-ink">{% icon "shield-check" "h-4 w-4 text-muted" %} Immutable snapshot</div>
+      <p class="text-[13px] text-muted mt-2 leading-relaxed">This receipt is rendered from the values saved at checkout. Renaming, repricing, or deactivating products will never change this bill, and reprinting never alters stock.</p>
+    </div>
+  </aside>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{% if print_mode %}
+<script>window.addEventListener("load", function () { window.print(); });</script>
+{% endif %}
+{% endblock %}

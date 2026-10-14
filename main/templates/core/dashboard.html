@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+{% load money icons %}
+
+{% block content %}
+<div class="flex flex-wrap items-end justify-between gap-4 mb-6">
+  <div>
+    <h2 class="text-2xl font-semibold tracking-tight">Welcome back to {{ shop.shop_name }}</h2>
+    <p class="text-muted mt-1">Here is how the counter is doing today.</p>
+  </div>
+  <a href="{% url 'billing:pos' %}" class="btn-primary btn-lg">
+    {% icon "plus" "h-[18px] w-[18px]" %} New Bill
+  </a>
+</div>
+
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+  <div class="card p-5">
+    <div class="stat-label">{% icon "indian-rupee" "h-4 w-4" %} Today&rsquo;s sales</div>
+    <div class="stat-value">{{ today_total|rupees }}</div>
+    <div class="text-[13px] text-muted mt-1.5">Total value billed today</div>
+  </div>
+  <div class="card p-5">
+    <div class="stat-label">{% icon "receipt-text" "h-4 w-4" %} Bills today</div>
+    <div class="stat-value">{{ today_count }}</div>
+    <div class="text-[13px] text-muted mt-1.5">Completed transactions</div>
+  </div>
+  <div class="card p-5">
+    <div class="stat-label">{% icon "triangle-alert" "h-4 w-4" %} Low-stock items</div>
+    <div class="stat-value {% if low_stock_count %}text-warning{% endif %}">{{ low_stock_count }}</div>
+    <div class="text-[13px] text-muted mt-1.5">
+      {% if out_of_stock_count %}
+        <span class="text-danger font-medium">{{ out_of_stock_count }} out of stock</span> · at or below {{ low_stock_threshold }}
+      {% else %}
+        At or below {{ low_stock_threshold }} units
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+{% if not has_products %}
+  <div class="card mb-6">
+    <div class="empty-state">
+      <span class="empty-icon">{% icon "package" "h-6 w-6" %}</span>
+      <h3 class="text-base font-semibold">Add your first product</h3>
+      <p class="text-muted mt-1 max-w-sm">Your catalogue is empty. Add a product with its price, GST rate, and stock to start billing.</p>
+      <a href="{% url 'products:create' %}" class="btn-primary mt-5">
+        {% icon "plus" "h-4 w-4" %} Add product
+      </a>
+    </div>
+  </div>
+{% endif %}
+
+<div class="grid grid-cols-1 xl:grid-cols-5 gap-6">
+  <section class="card xl:col-span-3 overflow-hidden">
+    <div class="card-section-head">
+      <div>
+        <h3 class="text-[15px] font-semibold">Recent sales</h3>
+        <p class="text-[13px] text-muted mt-0.5">Latest completed bills</p>
+      </div>
+      <a href="{% url 'billing:sale_list' %}" class="btn-ghost h-9 text-[13px]">View all {% icon "arrow-right" "h-3.5 w-3.5" %}</a>
+    </div>
+    {% if recent_sales %}
+      <div class="overflow-x-auto">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Bill</th>
+              <th class="text-right">Items</th>
+              <th>Time</th>
+              <th class="text-right">Total</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for sale in recent_sales %}
+              <tr>
+                <td>
+                  <a href="{% url 'billing:sale_detail' sale.bill_number %}" class="font-medium text-ink hover:text-primary tnum">{{ sale.bill_number }}</a>
+                </td>
+                <td class="num text-muted">{{ sale.item_count }}</td>
+                <td class="text-muted whitespace-nowrap">{{ sale.created_at|date:"d M, H:i" }}</td>
+                <td class="num font-semibold text-ink">{{ sale.grand_total|rupees }}</td>
+                <td class="w-10">
+                  <a href="{% url 'billing:sale_detail' sale.bill_number %}" class="btn-icon" aria-label="View receipt for {{ sale.bill_number }}">
+                    {% icon "chevron-right" "h-4 w-4" %}
+                  </a>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="empty-state">
+        <span class="empty-icon">{% icon "receipt-text" "h-6 w-6" %}</span>
+        <h3 class="text-base font-semibold">No bills yet</h3>
+        <p class="text-muted mt-1 max-w-xs">Bills you complete at the counter will appear here.</p>
+        <a href="{% url 'billing:pos' %}" class="btn-secondary mt-5">Open Point of Sale</a>
+      </div>
+    {% endif %}
+  </section>
+
+  <section class="card xl:col-span-2 overflow-hidden">
+    <div class="card-section-head">
+      <div>
+        <h3 class="text-[15px] font-semibold">Low stock</h3>
+        <p class="text-[13px] text-muted mt-0.5">Restock soon</p>
+      </div>
+      <a href="{% url 'products:list' %}?status=low" class="btn-ghost h-9 text-[13px]">Manage</a>
+    </div>
+    {% if low_stock_products %}
+      <ul class="divide-y divide-line">
+        {% for product in low_stock_products %}
+          <li>
+            <a href="{% url 'products:edit' product.pk %}" class="flex items-center justify-between gap-3 px-5 py-3.5 hover:bg-app/70 transition-colors">
+              <div class="min-w-0">
+                <div class="font-medium text-ink truncate">{{ product.name }}</div>
+                {% if product.barcode %}<div class="text-[12px] text-muted tnum">{{ product.barcode }}</div>{% endif %}
+              </div>
+              <span class="badge-low shrink-0">{{ product.stock_quantity }} left</span>
+            </a>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <div class="empty-state">
+        <span class="empty-icon">{% icon "circle-check" "h-6 w-6" %}</span>
+        <h3 class="text-base font-semibold">Everything is well stocked</h3>
+        <p class="text-muted mt-1 max-w-xs">Products at or below {{ low_stock_threshold }} units will be listed here.</p>
+      </div>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

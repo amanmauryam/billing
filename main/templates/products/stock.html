@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% load icons %}
+
+{% block content %}
+<div class="flex flex-wrap items-end justify-between gap-4 mb-6">
+  <div>
+    <h2 class="text-2xl font-semibold tracking-tight">{{ product.name }}</h2>
+    <p class="text-muted mt-1">Stock adjustments and movement history.</p>
+  </div>
+  <div class="flex gap-2">
+    <a href="{% url 'products:edit' product.pk %}" class="btn-secondary">{% icon "pencil" "h-4 w-4" %} Edit product</a>
+    <a href="{% url 'products:list' %}" class="btn-ghost">{% icon "arrow-left" "h-4 w-4" %} Back</a>
+  </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+  <div class="space-y-6">
+    <div class="card p-5">
+      <div class="stat-label">{% icon "boxes" "h-4 w-4" %} Current stock</div>
+      <div class="stat-value {% if product.stock_status == 'out' %}text-danger{% elif product.stock_status == 'low' %}text-warning{% endif %} tnum">{{ product.stock_quantity }}</div>
+      <div class="mt-2">
+        {% if product.stock_status == 'out' %}<span class="badge-out">Out of stock</span>
+        {% elif product.stock_status == 'low' %}<span class="badge-low">Low stock</span>
+        {% else %}<span class="badge-ok">In stock</span>{% endif %}
+      </div>
+      {% if product.barcode %}<p class="text-[13px] text-muted mt-3 tnum">Barcode: {{ product.barcode }}</p>{% endif %}
+    </div>
+
+    <div class="card p-5">
+      <h3 class="text-[15px] font-semibold mb-4">Adjust stock</h3>
+      <form method="post" novalidate>
+        {% csrf_token %}
+        {% for field in form %}
+          {% include "partials/form_field.html" with field=field %}
+        {% endfor %}
+        <button type="submit" class="btn-primary w-full">{% icon "check" "h-4 w-4" %} Apply adjustment</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="lg:col-span-2 card overflow-hidden">
+    <div class="card-section-head">
+      <h3 class="text-[15px] font-semibold">Movement history</h3>
+      <span class="badge-muted">{{ movements|length }} shown</span>
+    </div>
+    {% if movements %}
+      <div class="overflow-x-auto">
+        <table class="table">
+          <thead>
+            <tr><th>Date</th><th class="text-right">Change</th><th>Reason</th><th>Note</th></tr>
+          </thead>
+          <tbody>
+            {% for movement in movements %}
+              <tr>
+                <td class="text-muted whitespace-nowrap">{{ movement.created_at|date:"d M Y, H:i" }}</td>
+                <td class="num font-semibold {% if movement.quantity_change < 0 %}text-danger{% else %}text-success{% endif %}">{{ movement.quantity_change|stringformat:"+d" }}</td>
+                <td>
+                  {% if movement.reason == 'sale' %}<span class="badge-primary">Sale</span>
+                  {% elif movement.reason == 'opening' %}<span class="badge-muted">Opening</span>
+                  {% else %}<span class="badge-muted">{{ movement.get_reason_display }}</span>{% endif %}
+                </td>
+                <td class="text-muted">{{ movement.note|default:"—" }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="empty-state">
+        <span class="empty-icon">{% icon "clipboard-list" "h-6 w-6" %}</span>
+        <h3 class="text-base font-semibold">No movements yet</h3>
+        <p class="text-muted mt-1">Sales and adjustments will be recorded here.</p>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

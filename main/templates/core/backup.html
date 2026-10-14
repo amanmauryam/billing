@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+{% load icons %}
+
+{% block content %}
+<div class="mb-6">
+  <h2 class="text-2xl font-semibold tracking-tight">Backup &amp; Restore</h2>
+  <p class="text-muted mt-1">Protect your products, sales, and receipts.</p>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+  <div class="lg:col-span-2 space-y-6">
+    <section class="card overflow-hidden">
+      <div class="card-section-head">
+        <div>
+          <h3 class="text-[15px] font-semibold">Backups</h3>
+          <p class="text-[13px] text-muted mt-0.5">{{ backups|length }} file{{ backups|length|pluralize }} in the backup folder</p>
+        </div>
+        <form method="post" action="{% url 'core:backup_create' %}">
+          {% csrf_token %}
+          <button type="submit" class="btn-primary">{% icon "database-backup" "h-4 w-4" %} Create backup</button>
+        </form>
+      </div>
+      {% if backups %}
+        <div class="overflow-x-auto">
+          <table class="table">
+            <thead>
+              <tr><th>File</th><th class="text-right">Size</th><th>Created</th><th class="text-right">Actions</th></tr>
+            </thead>
+            <tbody>
+              {% for backup in backups %}
+                <tr>
+                  <td class="font-medium tnum">{{ backup.name }}</td>
+                  <td class="num text-muted">{{ backup.size_kb }} KB</td>
+                  <td class="text-muted whitespace-nowrap">{{ backup.modified|date:"d M Y, H:i" }}</td>
+                  <td>
+                    <div class="flex justify-end">
+                      <button type="button" class="btn-secondary h-9 text-[13px] js-restore"
+                              data-name="{{ backup.name }}">
+                        {% icon "rotate-ccw" "h-4 w-4" %} Restore
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="empty-state">
+          <span class="empty-icon">{% icon "database-backup" "h-6 w-6" %}</span>
+          <h3 class="text-base font-semibold">No backups yet</h3>
+          <p class="text-muted mt-1 max-w-xs">Create your first backup to protect today&rsquo;s sales and inventory.</p>
+          <form method="post" action="{% url 'core:backup_create' %}" class="mt-5">
+            {% csrf_token %}
+            <button type="submit" class="btn-primary">{% icon "database-backup" "h-4 w-4" %} Create backup</button>
+          </form>
+        </div>
+      {% endif %}
+    </section>
+
+    <section class="card p-6">
+      <div class="flex items-center gap-2.5 mb-4">
+        <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-app text-muted">{% icon "hard-drive" "h-4 w-4" %}</span>
+        <h3 class="text-[15px] font-semibold">Where your data lives</h3>
+      </div>
+      <div class="space-y-3 text-[13px]">
+        <div>
+          <div class="text-muted mb-1">Database file</div>
+          <code class="block rounded-lg border border-line bg-app px-3 py-2 text-[12px] break-all">{{ database_path }}</code>
+        </div>
+        <div>
+          <div class="text-muted mb-1">Backup folder</div>
+          <code class="block rounded-lg border border-line bg-app px-3 py-2 text-[12px] break-all">{{ backup_dir }}</code>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <aside class="space-y-4">
+    <div class="card p-5">
+      <div class="flex items-center gap-2 text-[13px] font-semibold text-ink">{% icon "shield-check" "h-4 w-4 text-success" %} Safe by design</div>
+      <ul class="mt-3 space-y-3 text-[13px] text-muted leading-relaxed">
+        <li class="flex gap-2"><span class="text-success mt-0.5">{% icon "check" "h-3.5 w-3.5" %}</span><span>Backups use SQLite&rsquo;s online backup API for a consistent snapshot.</span></li>
+        <li class="flex gap-2"><span class="text-success mt-0.5">{% icon "check" "h-3.5 w-3.5" %}</span><span>Restore validates the file first.</span></li>
+        <li class="flex gap-2"><span class="text-success mt-0.5">{% icon "check" "h-3.5 w-3.5" %}</span><span>A safety backup of your current data is taken before any restore.</span></li>
+      </ul>
+    </div>
+    <div class="card p-5">
+      <div class="flex items-center gap-2 text-[13px] font-semibold text-warning">{% icon "triangle-alert" "h-4 w-4" %} Important</div>
+      <p class="text-[13px] text-muted mt-2 leading-relaxed">A backup stored only on this computer does not protect against theft or disk failure. Copy backups to an external drive periodically.</p>
+      <p class="text-[13px] text-muted mt-2 leading-relaxed">After restoring, restart the application for a clean reload.</p>
+    </div>
+  </aside>
+</div>
+
+<!-- Restore confirmation -->
+<div id="restore-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="restore-title">
+  <div class="absolute inset-0 bg-ink/40" data-close-restore></div>
+  <div class="relative card p-6 max-w-md w-full shadow-pop">
+    <div class="flex items-start gap-3">
+      <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-danger/10 text-danger">{% icon "rotate-ccw" "h-5 w-5" %}</span>
+      <div>
+        <h3 id="restore-title" class="text-base font-semibold">Replace current database?</h3>
+        <p class="text-[13px] text-muted mt-1.5 leading-relaxed">You are about to restore from <span id="restore-name" class="font-medium text-ink tnum"></span>. Your current data will be replaced. A safety backup is created automatically first.</p>
+      </div>
+    </div>
+    <form method="post" action="{% url 'core:backup_restore' %}" class="mt-5">
+      {% csrf_token %}
+      <input type="hidden" name="backup_name" id="restore-name-input">
+      <input type="hidden" name="confirm" value="yes">
+      <div class="flex gap-2">
+        <button type="submit" class="btn-danger flex-1">{% icon "rotate-ccw" "h-4 w-4" %} Yes, restore</button>
+        <button type="button" class="btn-secondary flex-1" data-close-restore>Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  (function () {
+    var modal = document.getElementById("restore-modal");
+    var nameEl = document.getElementById("restore-name");
+    var nameInput = document.getElementById("restore-name-input");
+    if (!modal) return;
+    function open(name) {
+      nameEl.textContent = name;
+      nameInput.value = name;
+      modal.classList.remove("hidden");
+    }
+    function close() { modal.classList.add("hidden"); }
+    document.querySelectorAll(".js-restore").forEach(function (button) {
+      button.addEventListener("click", function () { open(button.dataset.name); });
+    });
+    document.querySelectorAll("[data-close-restore]").forEach(function (el) {
+      el.addEventListener("click", close);
+    });
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") close();
+    });
+  })();
+</script>
+{% endblock %}
