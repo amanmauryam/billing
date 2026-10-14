@@ -10,5 +10,6 @@ urlpatterns = [
     path("pos/lookup/", views.barcode_lookup, name="barcode_lookup"),
     path("pos/checkout/", views.checkout, name="checkout"),
     path("sales/", views.sale_list, name="sale_list"),
+    path("sales/export/", views.sale_export, name="sale_export"),
     path("sales/<str:bill_number>/", views.sale_detail, name="sale_detail"),
 ]

@@ -88,9 +88,11 @@ python manage.py runserver 127.0.0.1:8000
   default.
 - **Products** — add/edit/deactivate products, adjust stock (every change is
   recorded in the stock history).
-- **Sales** — search bills by number or date, filter by payment method (Cash,
-  UPI, or Credit), and reprint a saved receipt. Reprinting never changes stock
-  or creates a new bill.
+- **Sales / Bill history** — search bills by number, filter by date range and
+  by payment method (Cash, UPI, or Credit), and reprint a saved receipt.
+  Reprinting never changes stock or creates a new bill. Use **Export to Excel**
+  to download the currently filtered bills as an `.xlsx` spreadsheet (with a
+  totals row) for record-keeping or sharing.
 - **Settings** — shop details, receipt width, pricing mode, low-stock
   threshold, footer.
 - **Backup & Restore** — create and restore SQLite backups.

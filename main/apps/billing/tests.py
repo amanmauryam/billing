@@ -1,8 +1,11 @@
 import json
 from decimal import Decimal
+from io import BytesIO
 
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import timezone
+from openpyxl import load_workbook
 
 from apps.core.models import ShopSettings
 from apps.products.models import Product
@@ -315,3 +318,79 @@ class POSAndSalesViewTests(TestCase):
         self.assertEqual(printing.status_code, 200)
         self.assertContains(printing, 'window.addEventListener("load"')
         self.assertContains(printing, sale.bill_number)
+
+
+class SaleExportTests(TestCase):
+    def setUp(self):
+        configure_shop(pricing_mode=ShopSettings.PRICING_EXCLUSIVE)
+        self.product = Product.objects.create(
+            name="Pen", barcode="700", selling_price="10.00", gst_rate="0",
+            stock_quantity=100,
+        )
+
+    def _sale(self, token, payment):
+        sale, _ = services.perform_checkout(
+            cart_payload=[{"product_id": self.product.pk, "quantity": 1}],
+            checkout_token=token,
+            payment_method=payment,
+        )
+        return sale
+
+    def _export(self, **params):
+        return self.client.get(reverse("billing:sale_export"), params)
+
+    def _sheet_text(self, response):
+        workbook = load_workbook(BytesIO(response.content))
+        sheet = workbook.active
+        return "\n".join(
+            str(cell.value)
+            for row in sheet.iter_rows()
+            for cell in row
+            if cell.value is not None
+        )
+
+    def test_export_returns_xlsx_attachment(self):
+        self._sale("export-1", Sale.PAYMENT_CASH)
+        response = self._export()
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response["Content-Type"],
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        )
+        self.assertIn("attachment;", response["Content-Disposition"])
+        self.assertIn(".xlsx", response["Content-Disposition"])
+        workbook = load_workbook(BytesIO(response.content))
+        self.assertEqual(workbook.active.title, "Bill history")
+
+    def test_export_respects_payment_filter(self):
+        cash_sale = self._sale("export-cash", Sale.PAYMENT_CASH)
+        upi_sale = self._sale("export-upi", Sale.PAYMENT_UPI)
+
+        text = self._sheet_text(self._export(payment="upi"))
+        self.assertIn(upi_sale.bill_number, text)
+        self.assertNotIn(cash_sale.bill_number, text)
+
+        text = self._sheet_text(self._export(payment="cash"))
+        self.assertIn(cash_sale.bill_number, text)
+        self.assertNotIn(upi_sale.bill_number, text)
+
+    def test_export_respects_date_range(self):
+        sale = self._sale("export-dated", Sale.PAYMENT_CASH)
+        day = timezone.localtime(sale.created_at).strftime("%Y-%m-%d")
+
+        inside = self._sheet_text(self._export(date_from=day, date_to=day))
+        self.assertIn(sale.bill_number, inside)
+
+        outside = self._sheet_text(
+            self._export(date_from="2000-01-01", date_to="2000-01-02")
+        )
+        self.assertNotIn(sale.bill_number, outside)
+
+    def test_export_includes_totals_row(self):
+        self._sale("export-total", Sale.PAYMENT_CASH)
+        text = self._sheet_text(self._export())
+        self.assertIn("TOTAL", text)
+
+    def test_export_rejects_post(self):
+        response = self.client.post(reverse("billing:sale_export"))
+        self.assertEqual(response.status_code, 405)

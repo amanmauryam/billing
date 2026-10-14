@@ -4,10 +4,15 @@
 {% block content %}
 <div class="flex flex-wrap items-end justify-between gap-4 mb-6">
   <div>
-    <h2 class="text-2xl font-semibold tracking-tight">Sales history</h2>
-    <p class="text-muted mt-1">{{ total_count }} bill{{ total_count|pluralize }} on record. Receipts are saved permanently.</p>
+    <h2 class="text-2xl font-semibold tracking-tight">Bill history</h2>
+    <p class="text-muted mt-1">{{ total_count }} bill{{ total_count|pluralize }} match your filters. Receipts are saved permanently.</p>
   </div>
-  <a href="{% url 'billing:pos' %}" class="btn-primary btn-lg">{% icon "plus" "h-[18px] w-[18px]" %} New Bill</a>
+  <div class="flex flex-wrap items-center gap-2">
+    <a href="{% url 'billing:sale_export' %}{% if export_query %}?{{ export_query }}{% endif %}" class="btn-secondary btn-lg" title="Download the filtered bills as an Excel spreadsheet">
+      {% icon "download" "h-[18px] w-[18px]" %} Export to Excel
+    </a>
+    <a href="{% url 'billing:pos' %}" class="btn-primary btn-lg">{% icon "plus" "h-[18px] w-[18px]" %} New Bill</a>
+  </div>
 </div>
 
 <form method="get" class="card mb-5 p-2.5 flex flex-wrap items-center gap-3">
@@ -15,9 +20,16 @@
     <span class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted">{% icon "search" "h-4 w-4" %}</span>
     <input class="input pl-9 tnum" type="search" name="bill" value="{{ bill_number }}" placeholder="Search by bill number…" autocomplete="off" aria-label="Search by bill number">
   </div>
-  <div class="relative">
-    <span class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted">{% icon "file-text" "h-4 w-4" %}</span>
-    <input class="input pl-9 w-[190px]" type="date" name="date" value="{{ date_str }}" aria-label="Filter by date">
+  <div class="flex items-center gap-2">
+    <div class="relative">
+      <span class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted">{% icon "file-text" "h-4 w-4" %}</span>
+      <input class="input pl-9 w-[168px]" type="date" name="date_from" value="{{ date_from }}" aria-label="Filter from date">
+    </div>
+    <span class="text-[13px] text-muted">to</span>
+    <div class="relative">
+      <span class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted">{% icon "file-text" "h-4 w-4" %}</span>
+      <input class="input pl-9 w-[168px]" type="date" name="date_to" value="{{ date_to }}" aria-label="Filter to date">
+    </div>
   </div>
   <div class="relative">
     <span class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted">{% icon "wallet" "h-4 w-4" %}</span>
@@ -95,12 +107,12 @@
     <div class="text-[13px] text-muted">Page {{ page.number }} of {{ page.paginator.num_pages }}</div>
     <div class="flex gap-2">
       {% if page.has_previous %}
-        <a class="btn-secondary h-9" href="?bill={{ bill_number }}&date={{ date_str }}&payment={{ payment }}&page={{ page.previous_page_number }}">{% icon "chevron-left" "h-4 w-4" %} Previous</a>
+        <a class="btn-secondary h-9" href="?{% if export_query %}{{ export_query }}&amp;{% endif %}page={{ page.previous_page_number }}">{% icon "chevron-left" "h-4 w-4" %} Previous</a>
       {% else %}
         <span class="btn-secondary h-9 opacity-50 pointer-events-none">{% icon "chevron-left" "h-4 w-4" %} Previous</span>
       {% endif %}
       {% if page.has_next %}
-        <a class="btn-secondary h-9" href="?bill={{ bill_number }}&date={{ date_str }}&payment={{ payment }}&page={{ page.next_page_number }}">Next {% icon "chevron-right" "h-4 w-4" %}</a>
+        <a class="btn-secondary h-9" href="?{% if export_query %}{{ export_query }}&amp;{% endif %}page={{ page.next_page_number }}">Next {% icon "chevron-right" "h-4 w-4" %}</a>
       {% else %}
         <span class="btn-secondary h-9 opacity-50 pointer-events-none">Next {% icon "chevron-right" "h-4 w-4" %}</span>
       {% endif %}
