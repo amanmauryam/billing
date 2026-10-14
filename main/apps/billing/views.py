@@ -122,10 +122,17 @@ def checkout(request):
 def sale_list(request):
     bill_number = (request.GET.get("bill") or "").strip()
     date_str = (request.GET.get("date") or "").strip()
+    payment = (request.GET.get("payment") or "").strip()
 
     sales = Sale.objects.completed()
     if bill_number:
         sales = sales.filter(bill_number__icontains=bill_number)
+    if payment:
+        if payment in dict(Sale.PAYMENT_CHOICES):
+            sales = sales.filter(payment_method=payment)
+        else:
+            messages.warning(request, "Ignoring an unknown payment filter.")
+            payment = ""
     if date_str:
         try:
             from datetime import datetime, time
@@ -148,9 +155,11 @@ def sale_list(request):
             "page": page,
             "bill_number": bill_number,
             "date_str": date_str,
+            "payment": payment,
+            "payment_choices": Sale.PAYMENT_CHOICES,
             "total_count": paginator.count,
             "has_sales": Sale.objects.completed().exists(),
-            "has_filters": bool(bill_number or date_str),
+            "has_filters": bool(bill_number or date_str or payment),
         },
     )
 

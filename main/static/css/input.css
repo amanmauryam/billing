@@ -163,6 +163,15 @@
     @apply h-12 px-5 text-[15px];
   }
 
+  .payment-option {
+    @apply btn border border-line bg-surface text-muted shadow-xs
+      hover:bg-app hover:text-ink;
+  }
+  .payment-option-active {
+    @apply border-primary bg-primary/10 text-primary
+      hover:bg-primary/10 hover:text-primary;
+  }
+
   .input {
     @apply w-full h-10 rounded-lg border border-line bg-surface px-3 text-sm
       text-ink placeholder:text-muted transition duration-150

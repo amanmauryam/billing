@@ -19,7 +19,12 @@
   var checkoutButton = document.getElementById("checkout-button");
   var checkoutLabel = document.getElementById("checkout-label");
   var checkoutError = document.getElementById("checkout-error");
-  var paymentSelect = document.getElementById("payment-method");
+  var paymentGroup = document.getElementById("payment-method");
+  var paymentOptions = paymentGroup
+    ? Array.prototype.slice.call(paymentGroup.querySelectorAll("[data-payment]"))
+    : [];
+  var paymentInput = document.getElementById("payment-method-input");
+  var selectedPayment = paymentInput ? paymentInput.value || "cash" : "cash";
   var subtotalEl = document.getElementById("total-subtotal");
   var taxEl = document.getElementById("total-tax");
   var grandEl = document.getElementById("total-grand");
@@ -306,6 +311,16 @@
     renderCart();
   }
 
+  function setPayment(method) {
+    selectedPayment = method;
+    if (paymentInput) paymentInput.value = method;
+    paymentOptions.forEach(function (option) {
+      var active = option.getAttribute("data-payment") === method;
+      option.setAttribute("aria-checked", active ? "true" : "false");
+      option.classList.toggle("payment-option-active", active);
+    });
+  }
+
   function checkout() {
     if (inFlight || cart.length === 0) return;
     if (!pendingToken) {
@@ -321,7 +336,7 @@
 
     var payload = {
       token: pendingToken,
-      payment_method: paymentSelect.value,
+      payment_method: selectedPayment,
       items: cart.map(function (line) {
         return { product_id: line.id, quantity: line.quantity };
       }),
@@ -351,7 +366,7 @@
           successPanel.classList.remove("hidden");
           cart = [];
           pendingToken = null;
-          paymentSelect.value = "";
+          setPayment("cash");
           renderCart();
           clearTimeout(searchTimer);
           scanInput.value = "";
@@ -433,6 +448,12 @@
     }
   });
 
+  paymentOptions.forEach(function (option) {
+    option.addEventListener("click", function () {
+      setPayment(option.getAttribute("data-payment"));
+    });
+  });
+
   checkoutButton.addEventListener("click", checkout);
   newBillButton.addEventListener("click", closeSuccess);
   Array.prototype.forEach.call(
@@ -455,6 +476,7 @@
     }
   });
 
+  setPayment(selectedPayment);
   renderCart();
   scanInput.focus();
 })();

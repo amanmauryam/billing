@@ -19,6 +19,15 @@
     <span class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted">{% icon "file-text" "h-4 w-4" %}</span>
     <input class="input pl-9 w-[190px]" type="date" name="date" value="{{ date_str }}" aria-label="Filter by date">
   </div>
+  <div class="relative">
+    <span class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted">{% icon "wallet" "h-4 w-4" %}</span>
+    <select class="input pl-9 w-[180px] appearance-none" name="payment" aria-label="Filter by payment method">
+      <option value="">All payments</option>
+      {% for value, label in payment_choices %}
+        <option value="{{ value }}" {% if payment == value %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+  </div>
   <button type="submit" class="btn-secondary">Filter</button>
   {% if has_filters %}<a href="{% url 'billing:sale_list' %}" class="btn-ghost">Reset</a>{% endif %}
 </form>
@@ -31,6 +40,7 @@
           <tr>
             <th>Bill number</th>
             <th>Date &amp; time</th>
+            <th>Payment</th>
             <th class="text-right">Items</th>
             <th class="text-right">Grand total</th>
             <th class="text-right">Actions</th>
@@ -44,6 +54,13 @@
                 <div class="text-[12px] text-muted">{% if sale.pricing_mode_snapshot == 'inclusive' %}GST-inclusive{% else %}GST-exclusive{% endif %}</div>
               </td>
               <td class="text-muted whitespace-nowrap">{{ sale.created_at|date:"d M Y, H:i" }}</td>
+              <td>
+                {% if sale.payment_method %}
+                  <span class="badge-muted">{{ sale.get_payment_method_display }}</span>
+                {% else %}
+                  <span class="text-muted">—</span>
+                {% endif %}
+              </td>
               <td class="num text-muted">{{ sale.item_count }}</td>
               <td class="num font-semibold text-ink">{{ sale.grand_total|rupees }}</td>
               <td>
@@ -61,7 +78,7 @@
       {% if has_filters %}
         <span class="empty-icon">{% icon "search" "h-6 w-6" %}</span>
         <h3 class="text-base font-semibold">No bills match your search</h3>
-        <p class="text-muted mt-1">Try a different bill number or date.</p>
+        <p class="text-muted mt-1">Try a different bill number, date, or payment method.</p>
         <a href="{% url 'billing:sale_list' %}" class="btn-secondary mt-5">Clear filters</a>
       {% else %}
         <span class="empty-icon">{% icon "receipt-text" "h-6 w-6" %}</span>
@@ -78,12 +95,12 @@
     <div class="text-[13px] text-muted">Page {{ page.number }} of {{ page.paginator.num_pages }}</div>
     <div class="flex gap-2">
       {% if page.has_previous %}
-        <a class="btn-secondary h-9" href="?bill={{ bill_number }}&date={{ date_str }}&page={{ page.previous_page_number }}">{% icon "chevron-left" "h-4 w-4" %} Previous</a>
+        <a class="btn-secondary h-9" href="?bill={{ bill_number }}&date={{ date_str }}&payment={{ payment }}&page={{ page.previous_page_number }}">{% icon "chevron-left" "h-4 w-4" %} Previous</a>
       {% else %}
         <span class="btn-secondary h-9 opacity-50 pointer-events-none">{% icon "chevron-left" "h-4 w-4" %} Previous</span>
       {% endif %}
       {% if page.has_next %}
-        <a class="btn-secondary h-9" href="?bill={{ bill_number }}&date={{ date_str }}&page={{ page.next_page_number }}">Next {% icon "chevron-right" "h-4 w-4" %}</a>
+        <a class="btn-secondary h-9" href="?bill={{ bill_number }}&date={{ date_str }}&payment={{ payment }}&page={{ page.next_page_number }}">Next {% icon "chevron-right" "h-4 w-4" %}</a>
       {% else %}
         <span class="btn-secondary h-9 opacity-50 pointer-events-none">Next {% icon "chevron-right" "h-4 w-4" %}</span>
       {% endif %}

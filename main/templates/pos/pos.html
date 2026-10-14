@@ -72,13 +72,15 @@
           <span id="total-grand" class="text-[28px] leading-none font-semibold tracking-tight tnum text-ink">₹0.00</span>
         </div>
 
-        <label class="label mt-4 mb-1.5" for="payment-method">Payment method <span class="text-muted font-normal">(optional)</span></label>
-        <select id="payment-method" class="input mb-3">
-          <option value="">Not recorded</option>
-          <option value="cash">Cash</option>
-          <option value="card">Card</option>
-          <option value="upi">UPI</option>
-        </select>
+        <div class="mt-4 mb-3">
+          <span class="label mb-1.5" id="payment-label">Payment method</span>
+          <div id="payment-method" class="grid grid-cols-3 gap-2" role="radiogroup" aria-labelledby="payment-label">
+            <button type="button" class="payment-option" data-payment="cash" role="radio" aria-checked="true">{% icon "indian-rupee" "h-4 w-4" %} Cash</button>
+            <button type="button" class="payment-option" data-payment="upi" role="radio" aria-checked="false">{% icon "phone" "h-4 w-4" %} UPI</button>
+            <button type="button" class="payment-option" data-payment="credit" role="radio" aria-checked="false">{% icon "wallet" "h-4 w-4" %} Credit</button>
+          </div>
+          <input type="hidden" id="payment-method-input" value="cash">
+        </div>
 
         <p id="checkout-error" class="field-error mb-2 hidden" role="alert"></p>
         <button type="button" id="checkout-button" class="btn-primary btn-lg w-full" disabled>

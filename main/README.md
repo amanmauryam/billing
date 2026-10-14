@@ -83,11 +83,14 @@ python manage.py runserver 127.0.0.1:8000
 
 - **POS / New Bill** — the scan/search field is focused automatically. Scan a
   barcode (a keyboard-wedge scanner types the code and usually sends Enter) or
-  type to search. Exact barcode matches add one unit.
+  type to search. Exact barcode matches add one unit. Choose the payment method
+  (Cash, UPI, or Credit) before completing the sale; Cash is selected by
+  default.
 - **Products** — add/edit/deactivate products, adjust stock (every change is
   recorded in the stock history).
-- **Sales** — search bills by number or date and reprint a saved receipt.
-  Reprinting never changes stock or creates a new bill.
+- **Sales** — search bills by number or date, filter by payment method (Cash,
+  UPI, or Credit), and reprint a saved receipt. Reprinting never changes stock
+  or creates a new bill.
 - **Settings** — shop details, receipt width, pricing mode, low-stock
   threshold, footer.
 - **Backup & Restore** — create and restore SQLite backups.

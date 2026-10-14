@@ -33,12 +33,12 @@ class Sale(models.Model):
     STATUS_CHOICES = [(STATUS_COMPLETED, "Completed")]
 
     PAYMENT_CASH = "cash"
-    PAYMENT_CARD = "card"
     PAYMENT_UPI = "upi"
+    PAYMENT_CREDIT = "credit"
     PAYMENT_CHOICES = [
         (PAYMENT_CASH, "Cash"),
-        (PAYMENT_CARD, "Card"),
         (PAYMENT_UPI, "UPI"),
+        (PAYMENT_CREDIT, "Credit"),
     ]
 
     bill_number = models.CharField(max_length=40, unique=True)

@@ -157,6 +157,23 @@ class CheckoutTests(TestCase):
         self.product.save()
         self.assertTrue(Sale.objects.filter(pk=sale.pk).exists())
 
+    def test_checkout_records_payment_method(self):
+        sale, _ = services.perform_checkout(
+            cart_payload=[{"product_id": self.product.pk, "quantity": 1}],
+            checkout_token="pay-upi",
+            payment_method=Sale.PAYMENT_UPI,
+        )
+        self.assertEqual(sale.payment_method, Sale.PAYMENT_UPI)
+
+    def test_checkout_rejects_unknown_payment_method(self):
+        with self.assertRaises(services.CheckoutError):
+            services.perform_checkout(
+                cart_payload=[{"product_id": self.product.pk, "quantity": 1}],
+                checkout_token="pay-bogus",
+                payment_method="bitcoin",
+            )
+        self.assertEqual(Sale.objects.count(), 0)
+
 
 class CheckoutViewTests(TestCase):
     def setUp(self):
@@ -256,6 +273,34 @@ class POSAndSalesViewTests(TestCase):
         self.product.refresh_from_db()
         self.assertEqual(self.product.stock_quantity, stock_after_sale)
         self.assertEqual(Sale.objects.count(), 1)
+
+    def _sale_with_payment(self, token, payment):
+        services.perform_checkout(
+            cart_payload=[{"product_id": self.product.pk, "quantity": 1}],
+            checkout_token=token,
+            payment_method=payment,
+        )
+        return Sale.objects.get(checkout_token=token)
+
+    def test_sale_list_filters_by_payment_method(self):
+        cash_sale = self._sale_with_payment("cash-sale", Sale.PAYMENT_CASH)
+        upi_sale = self._sale_with_payment("upi-sale", Sale.PAYMENT_UPI)
+
+        listing = self.client.get(reverse("billing:sale_list"), {"payment": "upi"})
+        self.assertContains(listing, upi_sale.bill_number)
+        self.assertNotContains(listing, cash_sale.bill_number)
+
+        listing = self.client.get(reverse("billing:sale_list"), {"payment": "cash"})
+        self.assertContains(listing, cash_sale.bill_number)
+        self.assertNotContains(listing, upi_sale.bill_number)
+
+    def test_sale_list_ignores_unknown_payment_filter(self):
+        sale = self._sale_with_payment("unknown-filter", Sale.PAYMENT_CASH)
+        listing = self.client.get(
+            reverse("billing:sale_list"), {"payment": "bitcoin"}
+        )
+        self.assertEqual(listing.status_code, 200)
+        self.assertContains(listing, sale.bill_number)
 
     def test_print_mode_triggers_autoprint(self):
         services.perform_checkout(
